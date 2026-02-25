@@ -266,17 +266,32 @@
         return na - nb;
       });
 
+      // Map of court branches: courtId -> branch city name
+      const POBOCKY = {
+        'KSSCEUL': 'Liberec',       // KS Ústí nad Labem
+        'KSSEMOS': 'Olomouc',       // KS Ostrava
+        'KSJICCB': 'Tábor',         // KS České Budějovice
+        'KSZPCPM': 'Karlovy Vary',  // KS Plzeň
+        'KSVYCHK': 'Pardubice',     // KS Hradec Králové
+        'KSJIMBM': 'Jihlava / Zlín', // KS Brno (2 pobočky)
+        'OSSEMBR': 'Krnov',         // OS Bruntál
+        'OSSEMKA': 'Havířov',       // OS Karviná
+        'OSSEMVS': 'Valašské Meziříčí', // OS Vsetín
+      };
+
+      const branchCity = POBOCKY[courtId];
+
       // Group by location/building
-      // Rooms with "budova A/B" = main building (Ostrava for KS Ostrava)
-      // Rooms without building = branch office (Olomouc for KS Ostrava)
       const groups = {};
       sorted.forEach(([num, kod]) => {
         let group;
         const budovaMatch = kod.match(/budova\s+([A-Z])/i);
         if (budovaMatch) {
           group = 'Budova ' + budovaMatch[1].toUpperCase();
+        } else if (branchCity) {
+          group = `Pobočka ${branchCity}`;
         } else {
-          group = 'Pobočka';
+          group = 'Síně';
         }
         if (!groups[group]) groups[group] = [];
         groups[group].push(kod);
@@ -284,10 +299,10 @@
 
       sinSel.innerHTML = '<option value="">— Všechny síně —</option>';
 
-      // Sort: Budova A, Budova B, ... then Pobočka
+      // Sort: Budova A, Budova B first, then branch
       const groupOrder = Object.keys(groups).sort((a, b) => {
-        if (a === 'Pobočka') return 1;
-        if (b === 'Pobočka') return -1;
+        if (a.startsWith('Pobočka') && !b.startsWith('Pobočka')) return 1;
+        if (!a.startsWith('Pobočka') && b.startsWith('Pobočka')) return -1;
         return a.localeCompare(b);
       });
 
