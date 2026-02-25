@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hledač Jednání®</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --blue: #1400FF;
+    --black: #0a0a0a;
+    --white: #ffffff;
+    --grey: #888;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--white); color: var(--black); font-family: 'Barlow', sans-serif; font-size: 13px; overflow-x: hidden; }
+  a { text-decoration: none; color: inherit; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 40px;
+    z-index: 200;
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .nav-logo { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.02em; }
+  .nav-logo span { color: var(--blue); }
+  .nav-back { font-size: 11px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--grey); transition: color 0.2s; }
+  .nav-back:hover { color: var(--blue); }
+
+  /* HERO */
+  .hero {
+    padding-top: 64px; min-height: 40vh;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding-bottom: 60px; padding-left: 40px; padding-right: 40px;
+    border-bottom: 1px solid #eee;
+    position: relative; overflow: hidden;
+  }
+  .hero-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 12vw, 160px);
+    line-height: 0.87; letter-spacing: -0.02em;
+    color: var(--blue); text-transform: uppercase;
+  }
+  .hero-name .reg {
+    font-size: 0.32em; vertical-align: super;
+    border: 0.1em solid var(--blue); border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 0.6em; height: 0.6em; margin-left: 6px;
+  }
+  .hero-sub {
+    margin-top: 16px; font-size: clamp(14px, 1.8vw, 20px);
+    font-weight: 300; line-height: 1.4; max-width: 500px; color: #444;
+  }
+  .hero-meta {
+    position: absolute; top: 80px; right: 40px;
+    text-align: right;
+  }
+  .barcode { width: 110px; height: 26px; margin-left: auto;
+    background: repeating-linear-gradient(90deg,#000 0,#000 2px,transparent 2px,transparent 5px,#000 5px,#000 6px,transparent 6px,transparent 9px,#000 9px,#000 12px,transparent 12px,transparent 16px,#000 16px,#000 17px,transparent 17px,transparent 21px,#000 21px,#000 24px,transparent 24px,transparent 27px,#000 27px,#000 29px);
+  }
+  .barcode-label { font-size: 8px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; margin-top: 5px; font-family: 'Barlow Condensed', sans-serif; }
+  .barcode-sub { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--grey); margin-top: 8px; line-height: 1.6; }
+
+  /* APP */
+  .app-wrap { max-width: 1100px; margin: 0 auto; padding: 60px 40px; }
+
+  .app-box { background: white; border: 1px solid #e0e0e0; box-shadow: 0 8px 40px rgba(0,0,0,0.06); }
+  .app-header { background: #f0f0f0; padding: 12px 20px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e0e0e0; }
+  .app-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #28c840; display: inline-block; box-shadow: 0 0 6px rgba(40,200,64,0.6); animation: hjpulse 2s infinite; }
+  @keyframes hjpulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .app-live-label { font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: #666; }
+
+  .app-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; padding: 24px; align-items: end; border-bottom: 1px solid #eee; }
+  .app-label { display: block; font-size: 10px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--grey); margin-bottom: 6px; }
+  .app-select { width: 100%; padding: 10px 32px 10px 12px; border: 1px solid #ddd; background: #fafafa; font-size: 13px; font-family: 'Barlow', sans-serif; color: var(--black); appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; cursor: pointer; transition: border-color 0.2s; }
+  .app-select:focus { outline: none; border-color: var(--blue); }
+  .app-select:disabled { opacity: 0.5; cursor: not-allowed; }
+  .app-btn { padding: 11px 24px; background: var(--black); color: white; font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; border: none; cursor: pointer; white-space: nowrap; transition: background 0.2s; font-family: 'Barlow', sans-serif; height: 40px; }
+  .app-btn:hover:not(:disabled) { background: var(--blue); }
+  .app-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  .app-results { padding: 24px; min-height: 180px; }
+  .app-empty { text-align: center; padding: 50px 20px; font-size: 13px; color: var(--grey); letter-spacing: 0.05em; }
+  .app-spinner { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 50px 20px; font-size: 13px; color: var(--grey); }
+  .app-spinner::before { content: ''; display: inline-block; width: 18px; height: 18px; border: 2px solid #eee; border-top-color: var(--blue); border-radius: 50%; animation: hjspin 0.7s linear infinite; }
+  @keyframes hjspin { to { transform: rotate(360deg); } }
+
+  .app-summary { font-size: 11px; color: var(--grey); text-align: right; padding-bottom: 16px; letter-spacing: 0.08em; border-bottom: 1px solid #eee; margin-bottom: 20px; }
+
+  .app-day-block { margin-bottom: 28px; }
+  .app-day-title { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--black); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px solid var(--blue); display: flex; justify-content: space-between; align-items: center; }
+  .app-day-count { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; color: var(--grey); font-family: 'Barlow', sans-serif; }
+  .app-no-hearings { font-size: 12px; color: #bbb; padding: 10px 0; font-style: italic; }
+
+  /* HEARING CARDS */
+  .hearing-card { border: 1px solid #eee; margin-bottom: 10px; transition: border-color 0.2s; }
+  .hearing-card:hover { border-color: var(--blue); }
+  .hearing-zruseno { opacity: 0.6; border-color: #fcc !important; background: #fff5f5; }
+  .hearing-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f9f9f9; border-bottom: 1px solid #eee; }
+  .hearing-time { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 800; color: var(--blue); }
+  .hearing-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+  .badge-red { background: #fee; color: #c00; border: 1px solid #fcc; }
+  .badge-grey { background: #f0f0f0; color: #666; border: 1px solid #ddd; }
+  .badge-blue { background: #eef; color: var(--blue); border: 1px solid #ccf; }
+  .badge-green { background: #f0fff0; color: #060; border: 1px solid #cfc; }
+
+  .detail-table { width: 100%; border-collapse: collapse; }
+  .detail-row td { padding: 9px 16px; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+  .detail-row:last-child td { border-bottom: none; }
+  .detail-label { font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grey); width: 160px; }
+  .detail-val { color: var(--black); font-weight: 400; }
+  .detail-val-case { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 800; }
+
+  .app-error { background: #fff5f5; border-left: 3px solid #e00; padding: 16px 20px; font-size: 13px; color: #c00; line-height: 1.6; }
+
+  /* FOOTER */
+  footer { border-top: 1px solid #eee; padding: 28px 40px; display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grey); }
+
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .hero { padding-left: 20px; padding-right: 20px; }
+    .hero-meta { display: none; }
+    .app-wrap { padding: 40px 20px; }
+    .app-form { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 8px; padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Hledač <span>Jednání</span>®</div>
+  <a href="https://oskarshindler.github.io" class="nav-back">← Portfolio</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-meta">
+    <div class="barcode"></div>
+    <div class="barcode-label">Hledač Jednání</div>
+    <div class="barcode-sub">Verze 2.0<br>2025</div>
+  </div>
+  <h1 class="hero-name">HLEDAČ<br>JEDNÁNÍ<span class="reg">®</span></h1>
+  <p class="hero-sub">Najdi nařízená soudní jednání napříč celou ČR — rychle, přehledně, bez zbytečného klikání.</p>
+</section>
+
+<!-- APP -->
+<div class="app-wrap">
+  <div class="app-box">
+    <div class="app-header">
+      <span class="app-live-dot"></span>
+      <span class="app-live-label">Live — infosoud.gov.cz API</span>
+    </div>
+    <div class="app-form">
+      <div class="app-field">
+        <label class="app-label">Soud</label>
+        <select class="app-select" id="hj-soud" onchange="hjOnCourtChange()">
+          <option value="">— Načítám soudy... —</option>
+        </select>
+      </div>
+      <div class="app-field">
+        <label class="app-label">Jednací síň</label>
+        <select class="app-select" id="hj-sin">
+          <option value="">— Všechny síně —</option>
+        </select>
+      </div>
+      <div class="app-field">
+        <label class="app-label">Počet dní dopředu</label>
+        <select class="app-select" id="hj-days">
+          <option value="1">1 den</option>
+          <option value="2">2 dny</option>
+          <option value="3">3 dny</option>
+          <option value="5" selected>5 dní</option>
+          <option value="7">7 dní</option>
+          <option value="14">14 dní</option>
+        </select>
+      </div>
+      <button class="app-btn" id="hj-btn" onclick="hjSearch()">Vyhledat →</button>
+    </div>
+    <div class="app-results" id="hj-results">
+      <div class="app-empty">Vyberte soud a klikněte na Vyhledat.</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>© 2025 Oskar Shindler</span>
+  <span>Data: infosoud.gov.cz</span>
+  <span>Czech Republic</span>
+</footer>
+
+<script>
+(function() {
+  const API = 'https://hledac-proxy.otakar-84f.workers.dev';
+
+  async function hjInit() {
+    try {
+      const [res1, res2] = await Promise.all([
+        fetch(`${API}/organizace/lov`),
+        fetch(`${API}/organizace/podrizene/lov`)
+      ]);
+      const krajske = await res1.json();
+      const okresni = await res2.json();
+      const all = [...krajske, ...okresni].sort((a,b) => a.nazev.localeCompare(b.nazev, 'cs'));
+
+      const sel = document.getElementById('hj-soud');
+      sel.innerHTML = '<option value="">— Vyberte soud —</option>';
+
+      const hlavni = all.filter(c => c.kod.startsWith('KS') || c.kod.startsWith('VS') || (c.kod.startsWith('MS') && !c.kod.startsWith('MSS')));
+      const ostatni = all.filter(c => !hlavni.includes(c));
+
+      const grp1 = document.createElement('optgroup');
+      grp1.label = 'Krajské a vrchní soudy';
+      hlavni.forEach(c => { const o = document.createElement('option'); o.value = c.kod; o.textContent = c.nazev; grp1.appendChild(o); });
+
+      const grp2 = document.createElement('optgroup');
+      grp2.label = 'Okresní a obvodní soudy';
+      ostatni.forEach(c => { const o = document.createElement('option'); o.value = c.kod; o.textContent = c.nazev; grp2.appendChild(o); });
+
+      sel.appendChild(grp1);
+      sel.appendChild(grp2);
+    } catch(e) {
+      document.getElementById('hj-soud').innerHTML = '<option value="">— Chyba načítání soudů —</option>';
+    }
+  }
+
+  window.hjOnCourtChange = async function() {
+    const courtId = document.getElementById('hj-soud').value;
+    const sinSel = document.getElementById('hj-sin');
+    sinSel.innerHTML = '<option value="">— Načítám síně... —</option>';
+    sinSel.disabled = true;
+    if (!courtId) {
+      sinSel.innerHTML = '<option value="">— Všechny síně —</option>';
+      sinSel.disabled = false;
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/organizace/lovkod/jednaci-sin?idOrganizace=${courtId}`);
+      const data = await res.json();
+      sinSel.innerHTML = '<option value="">— Všechny síně —</option>';
+      data.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.kod; o.textContent = s.kod;
+        sinSel.appendChild(o);
+      });
+    } catch(e) {
+      sinSel.innerHTML = '<option value="">— Chyba načítání síní —</option>';
+    } finally {
+      sinSel.disabled = false;
+    }
+  };
+
+  function getDates(days) {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < parseInt(days); i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+    return dates;
+  }
+
+  function fmtDate(iso) {
+    const [y,m,d] = iso.split('-');
+    const dn = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'][new Date(iso).getDay()];
+    return `${dn} ${parseInt(d)}.${parseInt(m)}.${y}`;
+  }
+
+  window.hjSearch = async function() {
+    const courtId = document.getElementById('hj-soud').value;
+    const sin = document.getElementById('hj-sin').value;
+    const days = document.getElementById('hj-days').value;
+    const resultsEl = document.getElementById('hj-results');
+    const btn = document.getElementById('hj-btn');
+
+    if (!courtId) {
+      resultsEl.innerHTML = '<div class="app-error">Prosím vyberte soud.</div>';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Načítám...';
+    resultsEl.innerHTML = '<div class="app-spinner">Načítám jednání</div>';
+
+    const dates = getDates(days);
+
+    try {
+      const fetches = dates.map(date => {
+        const payload = { druhOrganizace: courtId, datumJednani: date, typHledani: 'JEDNANI' };
+        if (sin) payload.jednaciSin = sin;
+        return fetch(`${API}/jednani/vyhledej`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(r => r.ok ? r.json() : null).then(data => ({ date, data }));
+      });
+
+      const allResults = await Promise.all(fetches);
+      let totalHearings = 0;
+      let html = '';
+
+      for (const { date, data } of allResults) {
+        if (!data) continue;
+        const udalosti = Array.isArray(data)
+          ? data.flatMap(d => d.udalosti || [])
+          : (data.udalosti || []);
+
+        udalosti.sort((a,b) => (a.cas || '').localeCompare(b.cas || ''));
+        totalHearings += udalosti.length;
+
+        html += `<div class="app-day-block">
+          <div class="app-day-title">
+            <span>${fmtDate(date)}</span>
+            <span class="app-day-count">${udalosti.length} jednání</span>
+          </div>`;
+
+        if (udalosti.length === 0) {
+          html += '<div class="app-no-hearings">Žádná jednání naplánována.</div>';
+        } else {
+          udalosti.forEach(u => {
+            const caseNum = [u.cislo, u.druh, u.rocnik].filter(x => x != null).join(' ');
+            const zruseno = u.jednaniZruseno;
+            const neverejne = u.neverejneJednani;
+
+            // Badges
+            let badges = '';
+            if (zruseno) badges += '<span class="badge badge-red">Zrušeno</span>';
+            if (neverejne) {
+              badges += '<span class="badge badge-grey">Neveřejné</span>';
+            } else {
+              badges += '<span class="badge badge-green">Veřejné</span>';
+            }
+
+            // Detail rows
+            let rows = '';
+            rows += `<tr class="detail-row"><td class="detail-label">Spisová značka</td><td class="detail-val detail-val-case">${caseNum || '—'}</td></tr>`;
+            if (u.resitel) rows += `<tr class="detail-row"><td class="detail-label">Soudce</td><td class="detail-val">${u.resitel}</td></tr>`;
+            if (u.druhJednani) rows += `<tr class="detail-row"><td class="detail-label">Druh jednání</td><td class="detail-val">${u.druhJednani}</td></tr>`;
+            if (u.predmetJednani) rows += `<tr class="detail-row"><td class="detail-label">Předmět</td><td class="detail-val">${u.predmetJednani}</td></tr>`;
+            if (u.jednaciSin) rows += `<tr class="detail-row"><td class="detail-label">Jednací síň</td><td class="detail-val">${u.jednaciSin}</td></tr>`;
+            if (u.vysledek) rows += `<tr class="detail-row"><td class="detail-label">Výsledek</td><td class="detail-val">${u.vysledek}</td></tr>`;
+            if (u.datumZapisuVysledku) rows += `<tr class="detail-row"><td class="detail-label">Datum zápisu</td><td class="detail-val">${u.datumZapisuVysledku}</td></tr>`;
+
+            html += `<div class="hearing-card ${zruseno ? 'hearing-zruseno' : ''}">
+              <div class="hearing-header">
+                <span class="hearing-time">${u.cas || '—'}</span>
+                <div class="hearing-badges">${badges}</div>
+              </div>
+              <table class="detail-table">${rows}</table>
+            </div>`;
+          });
+        }
+        html += '</div>';
+      }
+
+      const summary = `<div class="app-summary">Celkem ${totalHearings} jednání za ${days} dní</div>`;
+      resultsEl.innerHTML = totalHearings === 0
+        ? '<div class="app-empty">Žádná jednání nenalezena pro vybraný soud a období.</div>'
+        : summary + html;
+
+    } catch(e) {
+      resultsEl.innerHTML = `<div class="app-error">Nepodařilo se načíst data.<br><small>${e.message}</small></div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Vyhledat →';
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', hjInit);
+  } else {
+    hjInit();
+  }
+})();
+</script>
+</body>
+</html>
