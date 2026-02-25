@@ -138,7 +138,7 @@
 
 <nav>
   <div class="nav-logo">Hledač <span>Jednání</span>®</div>
-  <a href="https://oskarshindler.github.io" class="nav-back">← Portfolio</a>
+  <a href="https://b3takar.github.io" class="nav-back">← Portfolio</a>
 </nav>
 
 <!-- HERO -->
@@ -245,12 +245,63 @@
     try {
       const res = await fetch(`${API}/organizace/lovkod/jednaci-sin?idOrganizace=${courtId}`);
       const data = await res.json();
-      sinSel.innerHTML = '<option value="">— Všechny síně —</option>';
+
+      // Normalize and merge duplicates by room number
+      // e.g. "209 2. poschodí" and "209 2.poschodí" -> keep the cleaner one
+      const roomMap = new Map(); // roomNum -> best label
       data.forEach(s => {
-        const o = document.createElement('option');
-        o.value = s.kod; o.textContent = s.kod;
-        sinSel.appendChild(o);
+        const normalized = s.kod.replace(/\s+/g, ' ').trim();
+        const roomNum = normalized.match(/^(\d+)/)?.[1] || normalized;
+        const existing = roomMap.get(roomNum);
+        // Prefer the label with more spaces (cleaner formatting)
+        if (!existing || normalized.length > existing.length) {
+          roomMap.set(roomNum, normalized);
+        }
       });
+
+      // Sort by room number
+      const sorted = [...roomMap.entries()].sort((a, b) => {
+        const na = parseInt(a[0]) || 9999;
+        const nb = parseInt(b[0]) || 9999;
+        return na - nb;
+      });
+
+      // Group by location/building
+      // Rooms with "budova A/B" = main building (Ostrava for KS Ostrava)
+      // Rooms without building = branch office (Olomouc for KS Ostrava)
+      const groups = {};
+      sorted.forEach(([num, kod]) => {
+        let group;
+        const budovaMatch = kod.match(/budova\s+([A-Z])/i);
+        if (budovaMatch) {
+          group = 'Budova ' + budovaMatch[1].toUpperCase();
+        } else {
+          group = 'Pobočka';
+        }
+        if (!groups[group]) groups[group] = [];
+        groups[group].push(kod);
+      });
+
+      sinSel.innerHTML = '<option value="">— Všechny síně —</option>';
+
+      // Sort: Budova A, Budova B, ... then Pobočka
+      const groupOrder = Object.keys(groups).sort((a, b) => {
+        if (a === 'Pobočka') return 1;
+        if (b === 'Pobočka') return -1;
+        return a.localeCompare(b);
+      });
+
+      groupOrder.forEach(groupName => {
+        const grp = document.createElement('optgroup');
+        grp.label = groupName;
+        groups[groupName].forEach(kod => {
+          const o = document.createElement('option');
+          o.value = kod; o.textContent = kod;
+          grp.appendChild(o);
+        });
+        sinSel.appendChild(grp);
+      });
+
     } catch(e) {
       sinSel.innerHTML = '<option value="">— Chyba načítání síní —</option>';
     } finally {
@@ -315,7 +366,17 @@
           : (data.udalosti || []);
 
         udalosti.sort((a,b) => (a.cas || '').localeCompare(b.cas || ''));
-        totalHearings += udalosti.length;
+
+        // Deduplicate hearings by case number + time
+        const seenHearings = new Set();
+        const uniqueUdalosti = udalosti.filter(u => {
+          const key = `${u.cas}-${u.cislo}-${u.druh}-${u.rocnik}`;
+          if (seenHearings.has(key)) return false;
+          seenHearings.add(key);
+          return true;
+        });
+        const udalostiDeduped = uniqueUdalosti;
+        totalHearings += udalostiDeduped.length;
 
         html += `<div class="app-day-block">
           <div class="app-day-title">
@@ -323,10 +384,10 @@
             <span class="app-day-count">${udalosti.length} jednání</span>
           </div>`;
 
-        if (udalosti.length === 0) {
+        if (udalostiDeduped.length === 0) {
           html += '<div class="app-no-hearings">Žádná jednání naplánována.</div>';
         } else {
-          udalosti.forEach(u => {
+          udalostiDeduped.forEach(u => {
             const caseNum = [u.cislo, u.druh, u.rocnik].filter(x => x != null).join(' ');
             const zruseno = u.jednaniZruseno;
             const neverejne = u.neverejneJednani;
